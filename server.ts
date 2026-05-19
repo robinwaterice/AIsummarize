@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
@@ -6,15 +7,15 @@ import { GoogleGenAI } from "@google/genai";
 async function startServer() {
   const app = express();
   app.use(express.json());
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("\n⚠️ 警告: 未在 .env 檔案中偵測到 GEMINI_API_KEY。請在根目錄的 .env 檔案中填入您的金鑰。");
+  }
 
   const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY || "",
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
+    apiKey: apiKey || "DUMMY_KEY",
   });
 
   const SYSTEM_INSTRUCTION = `
@@ -35,6 +36,10 @@ async function startServer() {
       const { prompt } = req.body;
       if (!prompt) {
         return res.status(400).json({ error: "Missing prompt" });
+      }
+
+      if (!apiKey || apiKey === "DUMMY_KEY") {
+        return res.status(400).json({ error: "請先在專案根目錄的 .env 檔案中設定您的 GEMINI_API_KEY。" });
       }
 
       const response = await ai.models.generateContent({

@@ -22,9 +22,12 @@ export default function App() {
         body: JSON.stringify({ prompt: input }),
       });
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '生成過程發生錯誤');
+      }
       setOutput(data.result);
-    } catch (error) {
-      setOutput('生成過程發生錯誤，請稍後再試。');
+    } catch (error: any) {
+      setOutput(error.message || '生成過程發生錯誤，請稍後再試。');
     } finally {
       setLoading(false);
     }
